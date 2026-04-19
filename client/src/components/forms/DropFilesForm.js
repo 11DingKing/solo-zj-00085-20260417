@@ -28,8 +28,8 @@ class DropFilesForm extends Component {
       return (
         <Alert
           alert={alert}
-          on;
-    }  />
+          onClose={() => this.setState({ showAlert: false })}
+        />
       );
     }
   }
@@ -54,7 +54,7 @@ class DropFilesForm extends Component {
     const initResponse = await api.initUpload(
       uploadTo || '',
       file.name,
-      file.size
+      file.size,
     );
 
     if (!initResponse.success) {
@@ -89,7 +89,7 @@ class DropFilesForm extends Component {
         i,
         chunk,
         file.name,
-        totalChunks
+        totalChunks,
       );
 
       if (!chunkResponse.success) {
@@ -107,7 +107,7 @@ class DropFilesForm extends Component {
       file.name,
       file.size,
       chunkSize,
-      totalChunks
+      totalChunks,
     );
 
     return completeResponse;
@@ -166,7 +166,7 @@ class DropFilesForm extends Component {
 
             const totalProgress = Object.values(newFileProgresses).reduce(
               (a, b) => a + b,
-              0
+              0,
             );
             const overallProgress = Math.round(totalProgress / files.length);
 
@@ -175,7 +175,7 @@ class DropFilesForm extends Component {
               overallProgress,
             };
           });
-        }
+        },
       );
 
       if (!response.success) {
@@ -210,7 +210,8 @@ class DropFilesForm extends Component {
   }
 
   render() {
-    const { uploading, currentFiles, overallProgress, fileProgresses } = this.state;
+    const { uploading, currentFiles, overallProgress, fileProgresses } =
+      this.state;
 
     return (
       <>
@@ -280,7 +281,8 @@ class DropFilesForm extends Component {
               }}
               className="m-0"
             >
-              拖拽文件到此处上传（最大支持 {api.formatFileSize(api.getMaxFileSize())}）
+              拖拽文件到此处上传（最大支持{' '}
+              {api.formatFileSize(api.getMaxFileSize())}）
             </p>
           )}
         </Jumbotron>
