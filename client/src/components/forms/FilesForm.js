@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import ProgressBar from 'react-bootstrap/ProgressBar';
+import ListGroup from 'react-bootstrap/ListGroup';
+import Badge from 'react-bootstrap/Badge';
 import Loading from '../Loading';
 import Alert from '../Alert';
 import api from '../../api/api';
@@ -19,10 +21,17 @@ class FilesForm extends Component {
       fileProgresses: {},
     };
     this.uploadCancelled = false;
+    this.fileInputRef = React.createRef();
   }
 
   onChange(e) {
-    this.setState({ files: e.target.files });
+    const fileList = e.target.files;
+    if (fileList && fileList.length > 0) {
+      const filesArray = Array.from(fileList);
+      this.setState({ files: filesArray });
+    } else {
+      this.setState({ files: [] });
+    }
   }
 
   showAlert(alert) {
@@ -128,7 +137,7 @@ class FilesForm extends Component {
     }
 
     this.uploadCancelled = false;
-    const files = Array.from(this.state.files);
+    const files = this.state.files;
     const maxFileSize = api.getMaxFileSize();
 
     const oversizedFiles = files.filter((f) => f.size > maxFileSize);
@@ -209,6 +218,10 @@ class FilesForm extends Component {
       files: [],
     });
 
+    if (this.fileInputRef.current) {
+      this.fileInputRef.current.value = '';
+    }
+
     if (allSuccess && !this.uploadCancelled) {
       this.props.reload();
     }
@@ -218,12 +231,19 @@ class FilesForm extends Component {
     this.uploadCancelled = true;
   }
 
+  removeFile(index) {
+    const newFiles = [...this.state.files];
+    newFiles.splice(index, 1);
+    this.setState({ files: newFiles });
+  }
+
   render() {
     const {
       uploading,
       currentFiles,
       overallProgress,
       fileProgresses,
+      files,
     } = this.state;
 
     if (uploading) {
@@ -271,20 +291,62 @@ class FilesForm extends Component {
       );
     }
 
+    const hasFiles = files && files.length > 0;
+
     return (
       <>
         {this.showAlert(this.state.alert)}
         <Form className="mb-3" onSubmit={(e) => this.onSubmit(e)}>
           <Form.Label>上传文件</Form.Label>
           <Form.File
+            id="file-upload"
+            ref={this.fileInputRef}
             multiple
             className="mb-2"
             onChange={(e) => this.onChange(e)}
-            label={`最大支持 ${api.formatFileSize(api.getMaxFileSize())}`}
+            label={`选择文件（最大支持 ${api.formatFileSize(api.getMaxFileSize())}）`}
             custom
           />
-          <Button variant="primary" type="submit" disabled={!this.state.files.length}>
-            上传
+          
+          {hasFiles && (
+            <div className="mb-3">
+              <p className="mb-2">已选择 {files.length} 个文件：</p>
+              <ListGroup>
+                {files.map((file, index) => (
+                  <ListGroup.Item
+                    key={index}
+                    className="d-flex justify-content-between align-items-center"
+                  >
+                    <span
+                      style={{
+                        maxWidth: '70%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {file.name}
+                    </span>
+                    <div className="d-flex align-items-center">
+                      <Badge variant="secondary" className="mr-2">
+                        {api.formatFileSize(file.size)}
+                      </Badge>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => this.removeFile(index)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  </ListGroup.Item>
+                ))}
+              </ListGroup>
+            </div>
+          )}
+
+          <Button variant="primary" type="submit" disabled={!hasFiles}>
+            上传 {hasFiles ? `(${files.length} 个文件)` : ''}
           </Button>
         </Form>
       </>
